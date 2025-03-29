@@ -1,6 +1,6 @@
 #include "minitalk.h"
 
-void	process_signal(int signum)
+void	process_signal(int signum, siginfo_t *info, void *context)
 {
 	static int	bit_received = 0;
 	static char character = 0;
@@ -16,15 +16,18 @@ void	process_signal(int signum)
 		bit_received = 0;
 		character = 0;
 	}
+	kill(info->si_pid, SIGUSR1);
 }
 
 void	listen()
 {
 	struct sigaction	action;
 
-	action.sa_handler = process_signal;
+	action.sa_sigaction = process_signal;
+	action.sa_flags = SA_SIGINFO;
 	sigaction(SIGUSR1, &action, NULL);
 	sigaction(SIGUSR2, &action, NULL);
+
 	if (write(1, "\n", 1) == -1)
 		exit(EXIT_FAILURE);
 	while (1)
